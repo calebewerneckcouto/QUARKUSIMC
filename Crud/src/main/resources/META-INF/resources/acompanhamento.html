@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMC Calculator</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px 0;
+        }
+
+        nav ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        nav li {
+            margin: 0 15px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #fff;
+            font-weight: bold;
+            font-size: 16px;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #4caf50;
+        }
+
+        form {
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+            border-radius: 8px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid #ddd;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <nav>
+            <ul>
+                <li><a href="index.html">IMC</a></li>
+                <li><a href="acompanhamento.html">IMC Acompanhamento</a></li>
+            </ul>
+        </nav>
+    </header>
+
+  <form id="searchForm">
+        <label for="searchInput">Consultar por Nome:</label>
+        <input type="text" id="searchInput" name="searchInput" required="required" />
+        <button type="button" onclick="consultarPorNome()">Consultar</button>
+    </form>
+
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Data</th>
+                <th>Nome</th>
+                <th>Peso</th>
+                <th>Altura</th>
+                <th>Idade</th>
+                <th>Resultado IMC</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- A tabela será preenchida dinamicamente com JavaScript -->
+        </tbody>
+    </table>
+
+    <script>
+        async function consultarPorNome() {
+            try {
+                const input = document.getElementById("searchInput").value;
+                const response = await fetch(`/api/pessoas/buscarPorNome?nome=${encodeURIComponent(input)}`, {
+                    method: 'GET',
+                });
+                const data = await response.json();
+
+                // Atualiza a tabela
+                const tableBody = document.getElementById("dataTable").getElementsByTagName('tbody')[0];
+                tableBody.innerHTML = "";
+
+                if (data.length === 0) {
+                    const newRow = tableBody.insertRow(0);
+                    const newCell = newRow.insertCell(0);
+                    newCell.colSpan = 7;
+                    newCell.textContent = "Nenhum resultado encontrado.";
+                } else {
+                    data.forEach(pessoa => {
+                        const newRow = tableBody.insertRow(tableBody.rows.length);
+                        newRow.innerHTML = `
+                            <td>${pessoa.id}</td>
+                            <td>${pessoa.data}</td>
+                            <td>${pessoa.nome}</td>
+                            <td>${pessoa.peso}</td>
+                            <td>${pessoa.altura}</td>
+                            <td>${pessoa.idade}</td>
+                            <td>${pessoa.resultaImc}</td> 
+                        `;
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao buscar dados do backend:', error);
+            }
+        }
+    </script>
+
+</body>
+
+</html>
