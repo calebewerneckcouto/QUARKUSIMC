@@ -8,6 +8,12 @@
     <script src="https://code.jquery.com/jquery-1.4.4.min.js" type="text/javascript"></script>
     <script src="https://code.highcharts.com/highcharts.js" type="text/javascript"></script>
     <style>
+     #messageArea {
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px;
+            display: none;
+        }
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
@@ -102,6 +108,8 @@
             </ul>
         </nav>
     </header>
+    
+    <div id="messageArea"></div>
 
    <form id="searchForm" onsubmit="consultarPorNome(); return false;">
     <label for="searchInput">Consultar por Nome:</label>
@@ -122,6 +130,12 @@
                 <th>Resultado IMC</th>
             </tr>
         </thead>
+        
+        
+      <!-- Adicione uma imagem com src vazio -->
+    <img id="resultImage" src="" alt="Resultado da consulta" style="display: none; margin-left: 300px; ">
+    
+        
         <tbody>
             <!-- A tabela será preenchida dinamicamente com JavaScript -->
         </tbody>
@@ -130,7 +144,7 @@
     <div id="chartContainer">
         <!-- O gráfico Highcharts será renderizado aqui -->
     </div>
-
+    
     <script type="text/javascript">
         var chart;
 
@@ -167,6 +181,7 @@
             $.get(`/api/pessoas/buscarPorNome?nome=${encodeURIComponent(nome)}`, function (data) {
                 // Atualiza o gráfico e a tabela com os novos dados
                 atualizarGrafico(data);
+                exibirImagem();
             });
         }
 
@@ -195,6 +210,21 @@
             // Atualiza o gráfico
             chart.xAxis[0].setCategories(categorias);
             chart.series[0].setData(dados.map(pessoa => pessoa.peso));
+        }
+        
+        
+        function exibirImagem() {
+            const resultImage = $('#resultImage');
+            const messageArea = $('#messageArea');
+
+            // Atualiza o atributo src da imagem
+            resultImage.attr('src', 'static/imagememagrecer.jpg');
+
+            // Exibe a imagem e uma mensagem na área de mensagem
+            resultImage.show();
+            messageArea.text('Consulta concluída. Imagem exibida.');
+
+            // Pode adicionar mais lógica conforme necessário
         }
     </script>
 

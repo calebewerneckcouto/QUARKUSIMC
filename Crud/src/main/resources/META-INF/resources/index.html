@@ -136,6 +136,7 @@ nav a:hover {
 	</header>
 
 
+<div id="messageArea" class="message"></div>
 
 
 	<form id="imcForm" action="/api/pessoas" method="post">
@@ -265,6 +266,17 @@ nav a:hover {
 
         // Fechar o modal após salvar os dados
         closeModal();
+    }
+    
+    // Display the message
+    const message = messageService.getMessage();
+    const messageType = messageService.getMessageType();
+
+    if (message) {
+        messageArea.text(message).removeClass().addClass(`message ${messageType}`).fadeIn();
+        
+        // Hide the message after a few seconds (adjust the timeout as needed)
+        setTimeout(() => messageArea.fadeOut(), 5000);
     }
 </script>
 </body>

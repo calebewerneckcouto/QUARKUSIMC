@@ -30,17 +30,21 @@ public class ImcResources {
     @Inject
     PessoaRepository pessoaRepository;
 
+    // Inject an instance of your message service here
+    @Inject
+    MessageService messageService;
+
     @GET
     public List<Pessoas> listarPessoas() {
         try {
             return pessoaRepository.listAll();
         } catch (Exception e) {
             // Adicione o tratamento adequado para exceções de acesso ao banco de dados
+            messageService.sendMessage("Erro ao listar pessoas", "error");
             throw new RuntimeException("Erro ao listar pessoas", e);
         }
     }
- // ...
-
+    
     @GET
     @Path("/buscarPorNome")
     public Response buscarPorNome(@QueryParam("nome") String nome) {
@@ -48,12 +52,14 @@ public class ImcResources {
             List<Pessoas> pessoas = pessoaRepository.buscarPorNome(nome);
 
             if (pessoas.isEmpty()) {
+                messageService.sendMessage("Nenhuma pessoa encontrada com o nome fornecido.", "info");
                 return Response.status(Response.Status.NOT_FOUND).entity("Nenhuma pessoa encontrada com o nome fornecido.").build();
             }
 
             List<Pessoas> dadosGrafico = pessoaRepository.buscarPorNome(nome);
 
             if (dadosGrafico.isEmpty()) {
+                messageService.sendMessage("Nenhum dado disponível para o gráfico.", "info");
                 return Response.status(Response.Status.NOT_FOUND).entity("Nenhum dado disponível para o gráfico.").build();
             }
 
@@ -63,6 +69,7 @@ public class ImcResources {
             return Response.ok(jsonData).build();
         } catch (Exception e) {
             // Adicione o tratamento adequado para exceções de acesso ao banco de dados
+            messageService.sendMessage("Erro ao buscar pessoas por nome", "error");
             throw new RuntimeException("Erro ao buscar pessoas por nome", e);
         }
     }
@@ -88,6 +95,7 @@ public class ImcResources {
         try {
             return objectMapper.writeValueAsString(chartData);
         } catch (JsonProcessingException e) {
+            messageService.sendMessage("Erro ao converter dados do gráfico para JSON", "error");
             throw new RuntimeException("Erro ao converter dados do gráfico para JSON", e);
         }
     }
@@ -98,14 +106,17 @@ public class ImcResources {
         try {
             // Adicione validações antes de persistir a pessoa
             if (pessoa.getNome() == null || pessoa.getNome().trim().isEmpty()) {
+                messageService.sendMessage("Nome é obrigatório", "error");
                 return Response.status(Response.Status.BAD_REQUEST).entity("Nome é obrigatório").build();
             }
 
             pessoaRepository.persist(pessoa);
             // Retorne um código de status 201 Created após a criação bem-sucedida
+            messageService.sendMessage("Pessoa salva com sucesso.", "success");
             return Response.status(Response.Status.CREATED).build();
         } catch (Exception e) {
             // Adicione o tratamento adequado para exceções de acesso ao banco de dados
+            messageService.sendMessage("Erro ao salvar pessoa", "error");
             throw new RuntimeException("Erro ao salvar pessoa", e);
         }
     }
