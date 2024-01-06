@@ -1,7 +1,15 @@
 package org.acme.resources;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.acme.model.Pessoas;
 import org.acme.repository.PessoaRepository;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -13,7 +21,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.util.List;
 
 @Path("/api/pessoas")
 @Produces(MediaType.APPLICATION_JSON)
@@ -32,18 +39,66 @@ public class ImcResources {
             throw new RuntimeException("Erro ao listar pessoas", e);
         }
     }
+ // ...
 
     @GET
     @Path("/buscarPorNome")
-    public List<Pessoas> buscarPorNome(@QueryParam("nome") String nome) {
+    public Response buscarPorNome(@QueryParam("nome") String nome) {
         try {
-            // Adicione a lógica necessária para buscar pessoas pelo nome no repositório
-            return pessoaRepository.buscarPorNome(nome);
+            List<Pessoas> pessoas = pessoaRepository.buscarPorNome(nome);
+
+            if (pessoas.isEmpty()) {
+                return Response.status(Response.Status.NOT_FOUND).entity("Nenhuma pessoa encontrada com o nome fornecido.").build();
+            }
+
+            List<Pessoas> dadosGrafico = pessoaRepository.buscarPorNome(nome);
+
+            if (dadosGrafico.isEmpty()) {
+                return Response.status(Response.Status.NOT_FOUND).entity("Nenhum dado disponível para o gráfico.").build();
+            }
+
+            // Chame a função para criar o gráfico com os dados obtidos e retorne o JSON do gráfico
+            String jsonData = criarGrafico(dadosGrafico);
+
+            return Response.ok(jsonData).build();
         } catch (Exception e) {
             // Adicione o tratamento adequado para exceções de acesso ao banco de dados
             throw new RuntimeException("Erro ao buscar pessoas por nome", e);
         }
     }
+
+    // ...
+
+
+    private String criarGrafico(List<Pessoas> dadosGrafico) {
+        // Inicializa uma lista de objetos JSON representando os dados do gráfico
+        List<Map<String, Object>> chartData = new ArrayList<>();
+
+        // Preenche a lista com dados
+        for (Pessoas dados : dadosGrafico) {
+            Map<String, Object> dataPoint = new HashMap<>();
+            dataPoint.put("id", dados.getId());
+            dataPoint.put("data", dados.getData());
+            dataPoint.put("nome", dados.getNome());
+            dataPoint.put("peso", dados.getPeso());
+            dataPoint.put("altura", dados.getAltura());
+            dataPoint.put("idade", dados.getIdade());
+            dataPoint.put("resultaImc", dados.getResultaImc());
+            chartData.add(dataPoint);
+        }
+
+        // Retorna o JSON gerado
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(chartData);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Erro ao converter dados do gráfico para JSON", e);
+        }
+    }
+
+    // ...
+
+
 
     @POST
     @Transactional

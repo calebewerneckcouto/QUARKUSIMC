@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <head>
     <meta charset="UTF-8">
@@ -83,6 +84,7 @@
             text-align: left;
         }
     </style>
+
 </head>
 
 <body>
@@ -96,7 +98,7 @@
         </nav>
     </header>
 
-  <form id="searchForm">
+    <form id="searchForm">
         <label for="searchInput">Consultar por Nome:</label>
         <input type="text" id="searchInput" name="searchInput" required="required" />
         <button type="button" onclick="consultarPorNome()">Consultar</button>
@@ -119,7 +121,15 @@
         </tbody>
     </table>
 
+    <div id="chartContainer" style="width: 80%; margin: 20px auto;">
+        <canvas id="weightChart"></canvas>
+    </div>
+
     <script>
+        document.addEventListener("DOMContentLoaded", function () {
+           
+        });
+
         async function consultarPorNome() {
             try {
                 const input = document.getElementById("searchInput").value;
@@ -150,10 +160,45 @@
                             <td>${pessoa.resultaImc}</td> 
                         `;
                     });
+
+                    // Chama a função para criar o gráfico
+                    criarGrafico(data);
                 }
             } catch (error) {
                 console.error('Erro ao buscar dados do backend:', error);
             }
+        }
+
+        function criarGrafico(data) {
+            const chartData = {
+                labels: data.map(pessoa => pessoa.data),
+                datasets: [{
+                    label: 'Variação de Peso',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                    data: data.map(pessoa => pessoa.peso)
+                }]
+            };
+
+            const ctx = document.getElementById('weightChart').getContext('2d');
+            const weightChart = new Chart(ctx, {
+                type: 'line',
+                data: chartData,
+                options: {
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'day'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
         }
     </script>
 
