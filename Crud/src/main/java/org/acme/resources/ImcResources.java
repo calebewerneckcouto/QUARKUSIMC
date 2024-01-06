@@ -69,17 +69,14 @@ public class ImcResources {
 
     // ...
 
-
     private String criarGrafico(List<Pessoas> dadosGrafico) {
-        // Inicializa uma lista de objetos JSON representando os dados do gráfico
         List<Map<String, Object>> chartData = new ArrayList<>();
 
-        // Preenche a lista com dados
         for (Pessoas dados : dadosGrafico) {
             Map<String, Object> dataPoint = new HashMap<>();
             dataPoint.put("id", dados.getId());
             dataPoint.put("data", dados.getData());
-            dataPoint.put("nome", dados.getNome());
+            dataPoint.put("nome", dados.getNome()); // Incluí o campo "nome" no JSON
             dataPoint.put("peso", dados.getPeso());
             dataPoint.put("altura", dados.getAltura());
             dataPoint.put("idade", dados.getIdade());
@@ -87,7 +84,6 @@ public class ImcResources {
             chartData.add(dataPoint);
         }
 
-        // Retorna o JSON gerado
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             return objectMapper.writeValueAsString(chartData);
@@ -95,10 +91,6 @@ public class ImcResources {
             throw new RuntimeException("Erro ao converter dados do gráfico para JSON", e);
         }
     }
-
-    // ...
-
-
 
     @POST
     @Transactional
