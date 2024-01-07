@@ -5,15 +5,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IMC Calculator</title>
-    <script src="https://code.jquery.com/jquery-1.4.4.min.js" type="text/javascript"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js" type="text/javascript"></script>
     <script src="https://code.highcharts.com/highcharts.js" type="text/javascript"></script>
     <style>
-     #messageArea {
+        #messageArea {
             text-align: center;
             margin-top: 10px;
             padding: 10px;
             display: none;
         }
+
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
@@ -95,6 +96,14 @@
             width: 80%;
             margin: 20px auto;
         }
+
+        .success {
+            color: green;
+        }
+
+        .error {
+            color: red;
+        }
     </style>
 </head>
 
@@ -108,15 +117,14 @@
             </ul>
         </nav>
     </header>
-    
+
     <div id="messageArea"></div>
 
-   <form id="searchForm" onsubmit="consultarPorNome(); return false;">
-    <label for="searchInput">Consultar por Nome:</label>
-    <input type="text" id="searchInput" name="searchInput" required="required" />
-    <button type="submit">Consultar</button>
-</form>
-
+    <form id="searchForm" onsubmit="consultarPorNome(); return false;">
+        <label for="searchInput">Consultar por Nome:</label>
+        <input type="text" id="searchInput" name="searchInput" required="required" />
+        <button type="submit">Consultar</button>
+    </form>
 
     <table id="dataTable">
         <thead>
@@ -128,14 +136,14 @@
                 <th>Altura</th>
                 <th>Idade</th>
                 <th>Resultado IMC</th>
+                <th>Excluir</th>
             </tr>
         </thead>
         
         
-      <!-- Adicione uma imagem com src vazio -->
-    <img id="resultImage" src="" alt="Resultado da consulta" style="display: none; margin-left: 300px; ">
-    
-        
+     <!-- Adicione a tag <img> para exibir a imagem -->
+    <img id="resultImage" src="" alt="Imagem Resultado" style="display: none;margin-left: 360px">
+   
         <tbody>
             <!-- A tabela será preenchida dinamicamente com JavaScript -->
         </tbody>
@@ -145,6 +153,8 @@
         <!-- O gráfico Highcharts será renderizado aqui -->
     </div>
     
+     
+
     <script type="text/javascript">
         var chart;
 
@@ -171,27 +181,57 @@
                     data: [] // Deixe vazio inicialmente
                 }]
             });
-
-            
         });
+
+     // Função para excluir pessoa
+        function excluirPessoa(id) {
+            $.ajax({
+                url: `/api/pessoas/excluir/${id}`,
+                type: 'DELETE',
+                success: function () {
+                    // Atualiza a tabela após a exclusão
+                    consultarPorNome();
+
+                    // Verifica se não há mais itens na tabela
+                    if ($('#dataTable tbody tr').length === 1) {
+                        // Se não houver, recarrega a página
+                        location.reload();
+                    }
+
+                    // Exibe mensagem de exclusão bem-sucedida
+                    exibirMensagem('Pessoa excluída com sucesso.', 'success');
+                },
+                error: function (xhr, status, error) {
+                    console.error('Erro ao excluir pessoa:', error);
+                    // Exibe mensagem de erro ao excluir
+                    exibirMensagem('Erro ao excluir pessoa.', 'error');
+                }
+            });
+        }
 
         // Função para consultar dados por nome
         function consultarPorNome() {
             const nome = $('#searchInput').val();
-            $.get(`/api/pessoas/buscarPorNome?nome=${encodeURIComponent(nome)}`, function (data) {
-                // Atualiza o gráfico e a tabela com os novos dados
-                atualizarGrafico(data);
-                exibirImagem();
+            $.get(`/api/pessoas/buscarPorNome?nome=${encodeURIComponent(nome)}`, function (data, textStatus, xhr) {
+                if (xhr.status === 200) {
+                    // Se a resposta foi bem-sucedida, exiba a mensagem de sucesso
+                    exibirMensagem('Consulta concluída. Dados atualizados.', 'success');
+                    // Atualiza o gráfico e a tabela com os novos dados
+                    atualizarGrafico(data);
+                    exibirImagem();
+                } else {
+                    // Se a resposta foi um erro, exiba a mensagem de erro
+                    exibirMensagem('Erro na consulta. ' + data, 'error');
+                }
             });
         }
 
-        // Função para atualizar o gráfico com novos dados
         function atualizarGrafico(dados) {
             const categorias = dados.map(pessoa => pessoa.data);
             const tableBody = $('#dataTable tbody');
 
-            // Limpa a tabela
-            tableBody.empty();
+            // Remove todas as linhas existentes da tabela
+            tableBody.find('tr').remove();
 
             // Adiciona os dados à tabela
             dados.forEach(function (pessoa) {
@@ -202,7 +242,10 @@
                     $('<td>').text(pessoa.peso),
                     $('<td>').text(pessoa.altura),
                     $('<td>').text(pessoa.idade),
-                    $('<td>').text(pessoa.resultaImc)
+                    $('<td>').text(pessoa.resultaImc),
+                    $('<td>').append(
+                        $('<button>').text('Excluir').addClass('excluir-btn').data('id', pessoa.id)
+                    )
                 );
                 tableBody.append(newRow);
             });
@@ -210,9 +253,14 @@
             // Atualiza o gráfico
             chart.xAxis[0].setCategories(categorias);
             chart.series[0].setData(dados.map(pessoa => pessoa.peso));
+
+            // Associa a lógica de exclusão aos botões de excluir
+            $('.excluir-btn').click(function () {
+                const id = $(this).data('id');
+                excluirPessoa(id);
+            });
         }
-        
-        
+
         function exibirImagem() {
             const resultImage = $('#resultImage');
             const messageArea = $('#messageArea');
@@ -225,6 +273,14 @@
             messageArea.text('Consulta concluída. Imagem exibida.');
 
             // Pode adicionar mais lógica conforme necessário
+        }
+
+        function exibirMensagem(message, messageType) {
+            const messageArea = $('#messageArea');
+            messageArea.text(message);
+            messageArea.removeClass(); // Remove todas as classes de estilo
+            messageArea.addClass(messageType); // Adiciona a classe de estilo com base no tipo de mensagem
+            messageArea.show();
         }
     </script>
 

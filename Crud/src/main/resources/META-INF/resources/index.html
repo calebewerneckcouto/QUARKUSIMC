@@ -163,8 +163,7 @@ nav a:hover {
 			disabled>Calcular</button>
 			
 			
-			<button type="button" onclick="limpar();" id="limparBtn"
-			disabled>Limpar Formulario</button>
+			
 		
 
 	</form>
@@ -231,26 +230,7 @@ nav a:hover {
         document.getElementById('resultModal').style.display = 'none';
     }
     
-    function limpar() {
-        // Obtém o formulário pelo ID
-        var formulario = document.getElementById('imcForm');
-
-        // Verifica se o formulário foi encontrado
-        if (formulario) {
-            // Percorre os elementos do formulário
-            for (var i = 0; i < formulario.elements.length; i++) {
-                var elemento = formulario.elements[i];
-
-                // Verifica se o elemento é um campo de entrada que pode ser limpo
-                if (elemento.type !== 'button' && elemento.type !== 'submit' && elemento.type !== 'reset') {
-                    // Limpa o valor do campo
-                    elemento.value = '';
-                }
-            }
-        } else {
-            console.error('Formulário não encontrado. Certifique-se de fornecer o ID correto.');
-        }
-    }
+  
 
     function salvarDados() {
         var id = document.getElementById('id').value;

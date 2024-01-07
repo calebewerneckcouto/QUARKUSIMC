@@ -14,9 +14,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
@@ -30,21 +32,33 @@ public class ImcResources {
     @Inject
     PessoaRepository pessoaRepository;
 
-    // Inject an instance of your message service here
-    @Inject
-    MessageService messageService;
+    @DELETE
+    @Path("/excluir/{id}")
+    @Transactional
+    public Response excluirPessoa(@PathParam("id") Long id) {
+        try {
+            Pessoas pessoa = pessoaRepository.findById(id);
+
+            if (pessoa == null) {
+                return Response.status(Response.Status.NOT_FOUND).entity("Pessoa não encontrada.").build();
+            }
+
+            pessoaRepository.delete(pessoa);
+            return Response.ok().build();
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao excluir pessoa", e);
+        }
+    }
 
     @GET
     public List<Pessoas> listarPessoas() {
         try {
             return pessoaRepository.listAll();
         } catch (Exception e) {
-            // Adicione o tratamento adequado para exceções de acesso ao banco de dados
-            messageService.sendMessage("Erro ao listar pessoas", "error");
             throw new RuntimeException("Erro ao listar pessoas", e);
         }
     }
-    
+
     @GET
     @Path("/buscarPorNome")
     public Response buscarPorNome(@QueryParam("nome") String nome) {
@@ -52,14 +66,12 @@ public class ImcResources {
             List<Pessoas> pessoas = pessoaRepository.buscarPorNome(nome);
 
             if (pessoas.isEmpty()) {
-                messageService.sendMessage("Nenhuma pessoa encontrada com o nome fornecido.", "info");
                 return Response.status(Response.Status.NOT_FOUND).entity("Nenhuma pessoa encontrada com o nome fornecido.").build();
             }
 
             List<Pessoas> dadosGrafico = pessoaRepository.buscarPorNome(nome);
 
             if (dadosGrafico.isEmpty()) {
-                messageService.sendMessage("Nenhum dado disponível para o gráfico.", "info");
                 return Response.status(Response.Status.NOT_FOUND).entity("Nenhum dado disponível para o gráfico.").build();
             }
 
@@ -68,13 +80,9 @@ public class ImcResources {
 
             return Response.ok(jsonData).build();
         } catch (Exception e) {
-            // Adicione o tratamento adequado para exceções de acesso ao banco de dados
-            messageService.sendMessage("Erro ao buscar pessoas por nome", "error");
             throw new RuntimeException("Erro ao buscar pessoas por nome", e);
         }
     }
-
-    // ...
 
     private String criarGrafico(List<Pessoas> dadosGrafico) {
         List<Map<String, Object>> chartData = new ArrayList<>();
@@ -83,7 +91,7 @@ public class ImcResources {
             Map<String, Object> dataPoint = new HashMap<>();
             dataPoint.put("id", dados.getId());
             dataPoint.put("data", dados.getData());
-            dataPoint.put("nome", dados.getNome()); // Incluí o campo "nome" no JSON
+            dataPoint.put("nome", dados.getNome());
             dataPoint.put("peso", dados.getPeso());
             dataPoint.put("altura", dados.getAltura());
             dataPoint.put("idade", dados.getIdade());
@@ -95,7 +103,6 @@ public class ImcResources {
         try {
             return objectMapper.writeValueAsString(chartData);
         } catch (JsonProcessingException e) {
-            messageService.sendMessage("Erro ao converter dados do gráfico para JSON", "error");
             throw new RuntimeException("Erro ao converter dados do gráfico para JSON", e);
         }
     }
@@ -106,17 +113,13 @@ public class ImcResources {
         try {
             // Adicione validações antes de persistir a pessoa
             if (pessoa.getNome() == null || pessoa.getNome().trim().isEmpty()) {
-                messageService.sendMessage("Nome é obrigatório", "error");
                 return Response.status(Response.Status.BAD_REQUEST).entity("Nome é obrigatório").build();
             }
 
             pessoaRepository.persist(pessoa);
             // Retorne um código de status 201 Created após a criação bem-sucedida
-            messageService.sendMessage("Pessoa salva com sucesso.", "success");
             return Response.status(Response.Status.CREATED).build();
         } catch (Exception e) {
-            // Adicione o tratamento adequado para exceções de acesso ao banco de dados
-            messageService.sendMessage("Erro ao salvar pessoa", "error");
             throw new RuntimeException("Erro ao salvar pessoa", e);
         }
     }
