@@ -99,7 +99,7 @@ public class ImcResources {
             chartData.add(dataPoint);
         }
 
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = new ObjectMapper();//Biblioteca Java para processar JSON.
         try {
             return objectMapper.writeValueAsString(chartData);
         } catch (JsonProcessingException e) {
